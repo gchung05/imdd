@@ -1,0 +1,25 @@
+# R things
+.Rproj.user
+*.Rproj
+.Rhistory
+.RData
+*.RData
+*.Rdata
+.Ruserdata
+packrat/lib*/
+
+# Python things
+.idea
+env/
+
+# General things
+/docs/site/
+.env
+/data/
+
+# OSX Junk
+.DS_Store
+
+# test cache
+.cache/*
+tests/__pycache__/*

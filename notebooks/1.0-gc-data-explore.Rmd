@@ -1,0 +1,216 @@
+---
+title: "ICIJ IMDD 20181219 Data Overview"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: '2'
+  html_notebook:
+    toc: yes
+    toc_depth: 2
+---
+
+
+```{r, echo=F}
+UsePackage <- function(p) {
+  if (!is.element(p, installed.packages()[,1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE)
+}
+UsePackage("dplyr")
+UsePackage("knitr")
+UsePackage("lubridate")
+# Loads
+load(file="../data/interim/imdd.Rdata")
+device=imdd$device
+manuf=imdd$manuf
+event=imdd$event
+rm(imdd)
+# Fix date
+event$date_initiated_by_firm <- as.Date(event$date_initiated_by_firm)
+event$date_posted <- as.Date(event$date_posted)
+# event$create_date <- as.Date(event$create_date)
+```
+
+Three datasets, device, event, manuf. Dimensions are...
+
+```{r, echo=F}
+print(dim(device))
+print(dim(event))
+print(dim(manuf))
+```
+
+## Univars
+
+### Manufacturers
+
+#### Names
+
+Unique Names: `r length(unique(manuf$name))`
+
+Missing Names: `r sum(is.na(manuf$name) | manuf$name == "")`
+
+Top Names:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(manuf, name), desc(n)), 10))
+```
+
+#### Parents
+
+Unique Parents: `r length(unique(manuf$parent_company))`
+
+Missing Parents: `r sum(is.na(manuf$parent_company) | manuf$parent_company == "")`
+
+Top Parents:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(manuf, parent_company), desc(n)), 10))
+```
+
+### Devices
+
+#### Description
+
+Unique Description: `r length(unique(device$description))`
+
+Missing Description: `r sum(is.na(device$description) | device$description == "")`
+
+Top Description:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(device, description), desc(n)), 10))
+```
+
+#### Classifications
+
+Unique Classifications: `r length(unique(device$classification))`
+
+Missing Classifications: `r sum(is.na(device$classification) | device$classification == "")`
+
+Top Classifications:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(device, classification), desc(n)), 10))
+```
+
+#### Risk Classes
+
+Unique Risk Classes: `r length(unique(device$risk_class))`
+
+Missing Risk Classes: `r sum(is.na(device$risk_class) | device$risk_class == "")`
+
+Top Risk Classes:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(device, risk_class), desc(n)), 10))
+```
+
+#### Countries
+
+Unique Countries: `r length(unique(device$country))`
+
+Missing Countries: `r sum(is.na(device$country) | device$country == "")`
+
+Top Countries:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(device, country), desc(n)), 10))
+```
+
+#### Date Firm Initiation
+
+Missing dates: `r sum(is.na(event$date_initiated_by_firm))`
+
+```{r, echo=F}
+kable(table(year(event$date_initiated_by_firm)))
+```
+
+#### Date Posted
+
+Missing dates: `r sum(is.na(event$date_posted))`
+
+```{r, echo=F}
+kable(table(year(event$date_posted)))
+```
+
+#### Action Classification
+
+Unique Classification: `r length(unique(event$action_classification))`
+
+Missing Classification: `r sum(is.na(event$action_classification) | event$action_classification == "")`
+
+Top Classification:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(event, action_classification), desc(n)), 10))
+```
+
+#### Reason
+
+Unique Reason: `r length(unique(event$reason))`
+
+Missing Reason: `r sum(is.na(event$reason) | event$reason == "")`
+
+Top Reason:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(event, reason), desc(n)), 10))
+```
+
+#### Country
+
+Unique Country: `r length(unique(event$country))`
+
+Missing Country: `r sum(is.na(event$country) | event$country == "")`
+
+Top Country:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(event, country), desc(n)), 10))
+```
+
+#### Determined Cause
+
+Unique Cause: `r length(unique(event$determined_cause))`
+
+Missing Cause: `r sum(is.na(event$determined_cause) | event$determined_cause == "")`
+
+Top Cause:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(event, determined_cause), desc(n)), 10))
+```
+
+#### Type
+
+Unique Type: `r length(unique(event$type))`
+
+Missing Type: `r sum(is.na(event$type) | event$type == "")`
+
+Top Type:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(event, type), desc(n)), 10))
+```
+
+
+## Cross-Tabulations
+
+### deviceacturers
+
+
+
+```{r, echo=F}
+# blah
+```
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.

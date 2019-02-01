@@ -19,7 +19,9 @@ UsePackage <- function(p) {
 }
 UsePackage("dplyr")
 UsePackage("knitr")
+UsePackage("tidyr")
 UsePackage("lubridate")
+UsePackage("ggplot2")
 # Loads
 load(file="../data/interim/imdd.Rdata")
 device=imdd$device
@@ -29,7 +31,12 @@ rm(imdd)
 # Fix date
 event$date_initiated_by_firm <- as.Date(event$date_initiated_by_firm)
 event$date_posted <- as.Date(event$date_posted)
-# event$create_date <- as.Date(event$create_date)
+event$date <- as.Date(event$date, format="%Y-%m-%d")
+event$create_date <- as.Date(event$create_date, format="%Y-%m-%d")
+event$new_date <- ifelse(!is.na(event$date_initiated_by_firm), event$date_initiated_by_firm, ifelse(!is.na(event$date_posted), event$date_posted, ifelse(!is.na(event$create_date), event$create_date, event$date)))
+event$new_date <- as.Date(event$new_date, origin="1970-01-01")
+# Safety only
+safety <- event %>% filter(type != "Recall")
 ```
 
 Three datasets, device, event, manuf. Dimensions are...
@@ -134,6 +141,48 @@ Missing dates: `r sum(is.na(event$date_posted))`
 kable(table(year(event$date_posted)))
 ```
 
+#### Create Date
+
+Missing dates: `r sum(is.na(event$create_date))`
+
+```{r, echo=F}
+kable(table(year(event$create_date)))
+```
+
+#### Date (not otherwise specified)
+
+Missing dates: `r sum(is.na(event$date))`
+
+```{r, echo=F}
+kable(table(year(event$date)))
+```
+
+#### Any Date
+
+Missing all dates: `r sum(is.na(event$new_date))`
+
+```{r, echo=F}
+kable(table(year(event$new_date)))
+```
+
+#### Year by Country
+
+```{r, echo=F}
+yrcts <- event %>% mutate(year=year(as.Date(new_date, origin="1970-01-01"))) %>%
+  filter(country %in% c("CHE", "ESP", "FIN", "FRA", "NLD")) %>%
+  count(year, country) %>% rename(Country=country)
+ggplot(data=yrcts, aes(x=year, y=n, color=Country)) +
+    geom_line(size=1.5) + theme_minimal(base_size=16) +
+  xlab("Year of Event") + ylab("Number of Events") + ggtitle("Events by EU Country")
+pops <- data.frame(Country=c("CHE", "ESP", "FIN", "FRA", "NLD"),
+                   Population=c(8.526, 46.733, 5.522, 67.372, 17.284))
+yrcts <- merge(yrcts, pops, all.x=T) %>% mutate(n_adj=n / Population)
+ggplot(data=yrcts, aes(x=year, y=n_adj, color=Country)) +
+    geom_line(size=1.5) + theme_minimal(base_size=16) +
+  xlab("Year of Event") + ylab("Events / Population") + ggtitle("Events by EU Country - Population Adjusted")
+```
+
+
 #### Action Classification
 
 Unique Classification: `r length(unique(event$action_classification))`
@@ -146,16 +195,11 @@ Top Classification:
 kable(top_n(arrange(dplyr::count(event, action_classification), desc(n)), 10))
 ```
 
-#### Reason
-
-Unique Reason: `r length(unique(event$reason))`
-
-Missing Reason: `r sum(is.na(event$reason) | event$reason == "")`
-
-Top Reason:
+#### Action Classification by Country
 
 ```{r, echo=F}
-kable(top_n(arrange(dplyr::count(event, reason), desc(n)), 10))
+acbyc <- event %>% count(country, action_classification) %>% spread(action_classification, n) %>% rename(Missing=V1)
+kable(acbyc)
 ```
 
 #### Country
@@ -167,7 +211,19 @@ Missing Country: `r sum(is.na(event$country) | event$country == "")`
 Top Country:
 
 ```{r, echo=F}
-kable(top_n(arrange(dplyr::count(event, country), desc(n)), 10))
+kable(top_n(arrange(dplyr::count(event, country), desc(n)), 13))
+```
+
+#### Reason
+
+Unique Reason: `r length(unique(event$reason))`
+
+Missing Reason: `r sum(is.na(event$reason) | event$reason == "")`
+
+Top Reason:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(event, reason), desc(n)), 25))
 ```
 
 #### Determined Cause
@@ -182,6 +238,18 @@ Top Cause:
 kable(top_n(arrange(dplyr::count(event, determined_cause), desc(n)), 10))
 ```
 
+#### Action Summary
+
+Unique Action: `r length(unique(event$action_summary))`
+
+Missing Action: `r sum(is.na(event$action_summary) | event$action_summary == "")`
+
+Top Action:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(event, action_summary), desc(n)), 25))
+```
+
 #### Type
 
 Unique Type: `r length(unique(event$type))`
@@ -194,23 +262,44 @@ Top Type:
 kable(top_n(arrange(dplyr::count(event, type), desc(n)), 10))
 ```
 
+### For Safety Reasons
 
-## Cross-Tabulations
+#### Safety Reason
 
-### deviceacturers
+Unique Reason: `r length(unique(safety$reason))`
 
+Missing Reason: `r sum(is.na(safety$reason) | safety$reason == "")`
 
+Top Reason:
 
 ```{r, echo=F}
-# blah
+kable(top_n(arrange(dplyr::count(safety, reason), desc(n)), 25))
 ```
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+#### Safety Determined Cause
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+Unique Cause: `r length(unique(safety$determined_cause))`
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+Missing Cause: `r sum(is.na(safety$determined_cause) | safety$determined_cause == "")`
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+Top Cause:
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(safety, determined_cause), desc(n)), 10))
+```
+
+#### Safety Action Summary
+
+Unique Action: `r length(unique(safety$action_summary))`
+
+Missing Action: `r sum(is.na(safety$action_summary) | safety$action_summary == "")`
+
+Top Action:
+
+```{r, echo=F}
+kable(top_n(arrange(dplyr::count(safety, action_summary), desc(n)), 25))
+```
+
+*Disclaimer*
+
+This notebook represents exploratory analysis. It has not been validated. It should not be used to inform any decisions, nor should interpretations from this analysis be made regarding the IMDD.
